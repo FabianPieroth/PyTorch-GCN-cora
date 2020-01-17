@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sparse
 from sklearn.preprocessing import normalize
 import src.utils as utils
+import torch
 
 
 class DataLoader(object):
@@ -14,13 +15,13 @@ class DataLoader(object):
 
         # get different data sets
         self.test_indices, self.val_indices, self.train_indices = self._perform_data_split()
-        self.test_data, self.val_data, self.train_data = self._get_label_splits()
+        self.labels = self._get_labels()
         # calculate feature and adjacency matrix
         self.adj_matrix = self._get_adj_matrix()
         self.feat_matrix = self._get_feature_matrix()
 
     def get_data(self):
-        return self.adj_matrix, self.feat_matrix, self.test_data, self.val_data, self.train_data, self.test_indices, self.val_indices, self.train_indices
+        return self.adj_matrix, self.feat_matrix, self.labels, self.test_indices, self.val_indices, self.train_indices
 
     def _get_feature_matrix(self):
         """
@@ -30,14 +31,10 @@ class DataLoader(object):
         feat_matrix = self.get_sparse_matrix(matrix_name='attr_matrix')
         feat_matrix = normalize(feat_matrix, norm='l1', axis=1)
 
-        return feat_matrix
+        return self.sparse_matrix_to_tensor(feat_matrix)
 
-    def _get_label_splits(self):
-        test_data = self.raw_data['labels'][self.test_indices]
-        val_data = self.raw_data['labels'][self.val_data]
-        train_data = self.raw_data['labels'][self.train_data]
-
-        return test_data, val_data, train_data
+    def _get_labels(self):
+        return torch.LongTensor(self.raw_data['labels'])
 
     def _get_adj_matrix(self):
         """
@@ -57,7 +54,7 @@ class DataLoader(object):
 
         adj_matrix = d_inv_sqrt.dot(adj_matrix).dot(d_inv_sqrt)
 
-        return adj_matrix
+        return self.sparse_matrix_to_tensor(adj_matrix)
 
     def get_sparse_matrix(self, matrix_name):
         data = self.raw_data[matrix_name + '.data']
@@ -67,6 +64,18 @@ class DataLoader(object):
         sparse_matrix = sparse.csr_matrix((data, indices, indptr), shape=shape)
 
         return sparse_matrix
+
+    def sparse_matrix_to_tensor(self, sp_matrix):
+
+        sp_matrix = sp_matrix.tocoo()
+        values = sp_matrix.data
+        indices = np.vstack((sp_matrix.row, sp_matrix.col))
+
+        i = torch.LongTensor(indices)
+        v = torch.FloatTensor(values)
+        shape = sp_matrix.shape
+
+        return torch.sparse.FloatTensor(i, v, torch.Size(shape))
 
     def _perform_data_split(self):
         """
@@ -86,4 +95,10 @@ class DataLoader(object):
 
         valid_val_indices = [i for i in range(len(self.raw_data['labels'])) if i not in train_indices + test_indices]
         val_indices = list(np.random.choice(valid_val_indices, size=self.parameters['num_val_samples']))
-        return test_indices, train_indices, val_indices
+        return torch.LongTensor(test_indices), torch.LongTensor(val_indices), torch.LongTensor(train_indices)
+
+    def get_num_classes(self):
+        return len(set(self.raw_data['labels']))
+
+    def get_input_feat_size(self):
+        return self.raw_data['attr_matrix.shape'][1]
