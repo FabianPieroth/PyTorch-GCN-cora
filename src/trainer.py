@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+import src.utils as utils
 from src.data_loader import DataLoader
 from src.models import GCN
 
@@ -28,7 +29,7 @@ class Trainer(object):
             self.optimizer.zero_grad()
             out = self.model(adj_matrix, feat_matrix)
             train_loss = self.loss(out[train_indices], labels[train_indices])
-            train_acc = self.calculate_accuracy(out[train_indices], labels[train_indices])
+            train_acc = utils.calculate_accuracy(out[train_indices], labels[train_indices])
             train_loss.backward()
             self.optimizer.step()
 
@@ -59,14 +60,8 @@ class Trainer(object):
         self.model.eval()
         out = self.model(adj_matrix, feat_matrix)
         loss = self.loss(out[indices], labels[indices]).detach()
-        acc = self.calculate_accuracy(out[indices], labels[indices])
+        acc = utils.calculate_accuracy(out[indices], labels[indices])
         return loss, acc
-
-    def calculate_accuracy(self, out, labels):
-        predict = torch.argmax(out, dim=1)
-        accuracy = np.sum([labels[i] == predict[i]
-                           for i in range(len(labels))]) / len(labels)
-        return accuracy
 
 
 def main():

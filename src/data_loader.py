@@ -28,10 +28,10 @@ class DataLoader(object):
         Create sparse feature matrix and normalize rows to length 1 in L1 norm
         :return: sparse.csr_matrix
         """
-        feat_matrix = self.get_sparse_matrix(matrix_name='attr_matrix')
+        feat_matrix = utils.get_sparse_matrix(raw_data=self.raw_data, matrix_name='attr_matrix')
         feat_matrix = normalize(feat_matrix, norm='l1', axis=1)
 
-        return self.sparse_matrix_to_tensor(feat_matrix)
+        return utils.sparse_matrix_to_tensor(feat_matrix)
 
     def _get_labels(self):
         return torch.LongTensor(self.raw_data['labels'])
@@ -41,45 +41,16 @@ class DataLoader(object):
         Create sparse adjacency matrix, add self-connections and apply renormalization-trick from paper
         :return: sparse.csr_matrix
         """
-        adj_matrix = self.get_sparse_matrix(matrix_name='adj_matrix')
+        adj_matrix = utils.get_sparse_matrix(raw_data=self.raw_data, matrix_name='adj_matrix')
         # include self connections
         adj_matrix = adj_matrix + sparse.identity(adj_matrix.shape[0], format='csr')
-        # renormalization trick
-        rowsum = np.array(adj_matrix.sum(1))
-        d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-        d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-        d_inv_sqrt = sparse.diags(d_inv_sqrt)
-        # TODO: here seems the be an error!
-        # adj_matrix = adj_matrix.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+        adj_matrix = utils.renormalize_matrix(adj_matrix)
 
-        adj_matrix = d_inv_sqrt.dot(adj_matrix).dot(d_inv_sqrt)
-
-        return self.sparse_matrix_to_tensor(adj_matrix)
-
-    def get_sparse_matrix(self, matrix_name):
-        data = self.raw_data[matrix_name + '.data']
-        indices = self.raw_data[matrix_name + '.indices']
-        indptr = self.raw_data[matrix_name + '.indptr']
-        shape = self.raw_data[matrix_name + '.shape']
-        sparse_matrix = sparse.csr_matrix((data, indices, indptr), shape=shape)
-
-        return sparse_matrix
-
-    def sparse_matrix_to_tensor(self, sp_matrix):
-
-        sp_matrix = sp_matrix.tocoo()
-        values = sp_matrix.data
-        indices = np.vstack((sp_matrix.row, sp_matrix.col))
-
-        i = torch.LongTensor(indices)
-        v = torch.FloatTensor(values)
-        shape = sp_matrix.shape
-
-        return torch.sparse.FloatTensor(i, v, torch.Size(shape))
+        return utils.sparse_matrix_to_tensor(adj_matrix)
 
     def _perform_data_split(self):
         """
-        Split the dataset according the same way as in the paper; all sets are distinct
+        Split the dataset the same way as in the paper; all sets are distinct
         Test: indices are given
         Train: sample 20 indices per class
         Val: 500 random indices
