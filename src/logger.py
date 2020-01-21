@@ -12,7 +12,7 @@ class Logger(object):
         self.early_stopping(val_loss, model)
 
     def print_info(self, epoch, train_loss, train_acc, val_loss, val_acc):
-        print("\rEpoch: {}, Train Loss: {}, Train Acc: {}, Val Loss: {}, Val Acc: {}".format(epoch + 1,
+        print("\rEpoch: {}, Train Loss: {}, Train Acc: {}, Val Loss: {}, Val Acc: {}".format(epoch,
                                                                                              round(float(train_loss), ndigits=3),
                                                                                              round(float(train_acc), ndigits=3),
                                                                                              round(float(val_loss), ndigits=3),

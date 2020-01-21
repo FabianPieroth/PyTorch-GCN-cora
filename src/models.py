@@ -11,7 +11,7 @@ class GCLayer(nn.Module):
         dist_bound = 1. / np.sqrt(out_features)
         self.weights = nn.Parameter(torch.FloatTensor(in_features, out_features).uniform_(-dist_bound, dist_bound))
         if bias:
-            self.bias = nn.Parameter(torch.zeros(out_features))
+            self.bias = nn.Parameter(torch.zeros(out_features), requires_grad=True)
         else:
             self.bias = torch.zeros(out_features, requires_grad=False)
 
@@ -28,7 +28,7 @@ class GCN(nn.Module):
         super(GCN, self).__init__()
 
         self.layer1 = GCLayer(input_dim, hidden_dim, bias)
-        self.layer2 = GCLayer(hidden_dim, num_classes, bias)
+        self.layer2 = GCLayer(hidden_dim, num_classes)
         self.dropout = nn.Dropout(p=dropout_prob)
         self.log_softmax = torch.nn.LogSoftmax(dim=1)
 

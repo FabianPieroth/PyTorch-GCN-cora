@@ -25,8 +25,8 @@ def renormalize_matrix(adj_matrix):
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     d_inv_sqrt = sparse.diags(d_inv_sqrt)
     # TODO: here seems to be an error!
-    # adj_matrix = adj_matrix.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
-    adj_matrix = d_inv_sqrt.dot(adj_matrix).dot(d_inv_sqrt)
+    adj_matrix = adj_matrix.dot(d_inv_sqrt).transpose().dot(d_inv_sqrt)
+    # adj_matrix = d_inv_sqrt.dot(adj_matrix).dot(d_inv_sqrt)
     return adj_matrix
 
 
