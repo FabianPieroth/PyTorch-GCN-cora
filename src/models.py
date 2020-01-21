@@ -19,7 +19,6 @@ class GCLayer(nn.Module):
 
         out = torch.mm(feat_matrix, self.weights)
         out = torch.mm(adj_matrix, out) + self.bias
-        #out = torch.sparse.mm(adj_matrix, out) + self.bias
         return out
 
 
@@ -33,9 +32,6 @@ class GCN(nn.Module):
         self.log_softmax = torch.nn.LogSoftmax(dim=1)
 
     def forward(self, adj_matrix, feat_matrix):
-        # TODO: Fix dense multiplication!!
-        adj_matrix = adj_matrix.to_dense()
-        feat_matrix = feat_matrix.to_dense()
         x = F.relu(self.layer1(adj_matrix, feat_matrix))
         x = self.dropout(x)
         x = self.layer2(adj_matrix, x)

@@ -24,7 +24,7 @@ def renormalize_matrix(adj_matrix):
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     d_inv_sqrt = sparse.diags(d_inv_sqrt)
-    # TODO: here seems to be an error!
+    # TODO: the adjacency matrix is not symmetric! need to fix this
     adj_matrix = adj_matrix.dot(d_inv_sqrt).transpose().dot(d_inv_sqrt)
     # adj_matrix = d_inv_sqrt.dot(adj_matrix).dot(d_inv_sqrt)
     return adj_matrix
