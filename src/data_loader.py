@@ -42,6 +42,9 @@ class DataLoader(object):
         :return: sparse.csr_matrix
         """
         adj_matrix = utils.get_sparse_matrix(raw_data=self.raw_data, matrix_name='adj_matrix')
+
+        # make adjacency matrix symmetric
+        adj_matrix = adj_matrix + adj_matrix.T.multiply(adj_matrix.T > adj_matrix) - adj_matrix.multiply(adj_matrix.T > adj_matrix)
         # include self connections
         adj_matrix = adj_matrix + sparse.identity(adj_matrix.shape[0], format='csr')
         adj_matrix = utils.renormalize_matrix(adj_matrix)
